@@ -1,0 +1,28 @@
+# Keil build outputs
+MDK-ARM/ethercat_GalvoCtrl/
+MDK-ARM/Listings/
+MDK-ARM/Objects/
+*.o
+*.d
+*.crf
+*.lnp
+*.axf
+*.elf
+*.hex
+*.bin
+*.htm
+*.build_log.htm
+*.dep
+*.lst
+*.map
+
+# IDE user files
+*.uvguix.*
+*.uvoptx
+*.uv2.bak
+
+# OS / editor
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
