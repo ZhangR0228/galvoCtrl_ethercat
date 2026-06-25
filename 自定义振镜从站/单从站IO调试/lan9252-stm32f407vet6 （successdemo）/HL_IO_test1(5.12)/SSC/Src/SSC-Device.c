@@ -1,0 +1,420 @@
+/*
+* This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
+* The corresponding license agreement applies. This hint shall not be removed.
+*/
+
+/**
+\addtogroup SSC-Device SSC-Device
+@{
+*/
+
+/**
+\file SSC-Device.c
+\brief Implementation
+
+\version 1.0.0.11
+*/
+
+
+/*-----------------------------------------------------------------------------------------
+------
+------    Includes
+------
+-----------------------------------------------------------------------------------------*/
+#include "ecat_def.h"
+
+#include "applInterface.h"
+#include "stdio.h"
+
+#define _SSC_DEVICE_ 1
+#include "SSC-Device.h"
+#undef _SSC_DEVICE_
+/*--------------------------------------------------------------------------------------
+------
+------    local types and defines
+------
+--------------------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------
+------
+------    local variables and constants
+------
+-----------------------------------------------------------------------------------------*/
+
+static UINT8 sLastPdoOut = 0xFF;
+static UINT8 sLastPdoIn = 0xFF;
+
+/*-----------------------------------------------------------------------------------------
+------
+------    application specific functions
+------
+-----------------------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------
+------
+------    generic functions
+------
+-----------------------------------------------------------------------------------------*/
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \brief    The function is called when an error state was acknowledged by the master
+
+*////////////////////////////////////////////////////////////////////////////////////////
+
+void    APPL_AckErrorInd(UINT16 stateTrans)
+{
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
+
+ \brief    The function is called in the state transition from INIT to PREOP when
+             all general settings were checked to start the mailbox handler. This function
+             informs the application about the state transition, the application can refuse
+             the state transition when returning an AL Status error code.
+            The return code NOERROR_INWORK can be used, if the application cannot confirm
+            the state transition immediately, in that case this function will be called cyclically
+            until a value unequal NOERROR_INWORK is returned
+
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StartMailboxHandler(void)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return     0, NOERROR_INWORK
+
+ \brief    The function is called in the state transition from PREEOP to INIT
+             to stop the mailbox handler. This functions informs the application
+             about the state transition, the application cannot refuse
+             the state transition.
+
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StopMailboxHandler(void)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \param    pIntMask    pointer to the AL Event Mask which will be written to the AL event Mask
+                        register (0x204) when this function is succeeded. The event mask can be adapted
+                        in this function
+ \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
+
+ \brief    The function is called in the state transition from PREOP to SAFEOP when
+           all general settings were checked to start the input handler. This function
+           informs the application about the state transition, the application can refuse
+           the state transition when returning an AL Status error code.
+           The return code NOERROR_INWORK can be used, if the application cannot confirm
+           the state transition immediately, in that case the application need to be complete 
+           the transition by calling ECAT_StateChange.
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StartInputHandler(UINT16 *pIntMask)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return     0, NOERROR_INWORK
+
+ \brief    The function is called in the state transition from SAFEOP to PREEOP
+             to stop the input handler. This functions informs the application
+             about the state transition, the application cannot refuse
+             the state transition.
+
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StopInputHandler(void)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
+
+ \brief    The function is called in the state transition from SAFEOP to OP when
+             all general settings were checked to start the output handler. This function
+             informs the application about the state transition, the application can refuse
+             the state transition when returning an AL Status error code.
+           The return code NOERROR_INWORK can be used, if the application cannot confirm
+           the state transition immediately, in that case the application need to be complete 
+           the transition by calling ECAT_StateChange.
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StartOutputHandler(void)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return     0, NOERROR_INWORK
+
+ \brief    The function is called in the state transition from OP to SAFEOP
+             to stop the output handler. This functions informs the application
+             about the state transition, the application cannot refuse
+             the state transition.
+
+*////////////////////////////////////////////////////////////////////////////////////////
+
+UINT16 APPL_StopOutputHandler(void)
+{
+    return ALSTATUSCODE_NOERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\return     0(ALSTATUSCODE_NOERROR), NOERROR_INWORK
+\param      pInputSize  pointer to save the input process data length
+\param      pOutputSize  pointer to save the output process data length
+
+\brief    This function calculates the process data sizes from the actual SM-PDO-Assign
+            and PDO mapping
+*////////////////////////////////////////////////////////////////////////////////////////
+UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
+{
+    UINT16 result = ALSTATUSCODE_NOERROR;
+    UINT16 InputSize = 0;
+    UINT16 OutputSize = 0;
+
+#if COE_SUPPORTED
+    UINT16 PDOAssignEntryCnt = 0;
+    OBJCONST TOBJECT OBJMEM * pPDO = NULL;
+    UINT16 PDOSubindex0 = 0;
+    UINT32 *pPDOEntry = NULL;
+    UINT16 PDOEntryCnt = 0;
+   
+    /*Scan object 0x1C12 RXPDO assign*/
+    for(PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sRxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
+    {
+        pPDO = OBJ_GetObjectHandle(sRxPDOassign.aEntries[PDOAssignEntryCnt]);
+        if(pPDO != NULL)
+        {
+            PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
+            for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
+            {
+                pPDOEntry = (UINT32 *)((UINT16 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3)/2);    //goto PDO entry
+                // we increment the expected output size depending on the mapped Entry
+                OutputSize += (UINT16) ((*pPDOEntry) & 0xFF);
+            }
+        }
+        else
+        {
+            /*assigned PDO was not found in object dictionary. return invalid mapping*/
+            OutputSize = 0;
+            result = ALSTATUSCODE_INVALIDOUTPUTMAPPING;
+            break;
+        }
+    }
+
+    OutputSize = (OutputSize + 7) >> 3;
+
+    if(result == 0)
+    {
+        /*Scan Object 0x1C13 TXPDO assign*/
+        for(PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sTxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
+        {
+            pPDO = OBJ_GetObjectHandle(sTxPDOassign.aEntries[PDOAssignEntryCnt]);
+            if(pPDO != NULL)
+            {
+                PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
+                for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
+                {
+                    pPDOEntry = (UINT32 *)((UINT16 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3)/2);    //goto PDO entry
+                    // we increment the expected output size depending on the mapped Entry
+                    InputSize += (UINT16) ((*pPDOEntry) & 0xFF);
+                }
+            }
+            else
+            {
+                /*assigned PDO was not found in object dictionary. return invalid mapping*/
+                InputSize = 0;
+                result = ALSTATUSCODE_INVALIDINPUTMAPPING;
+                break;
+            }
+        }
+    }
+    InputSize = (InputSize + 7) >> 3;
+
+#else
+#if _WIN32
+   #pragma message ("Warning: Define 'InputSize' and 'OutputSize'.")
+#else
+    #warning "Define 'InputSize' and 'OutputSize'."
+#endif
+#endif
+
+    *pInputSize = InputSize;
+    *pOutputSize = OutputSize;
+    return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\param      pData  pointer to input process data
+
+\brief      This function will copies the inputs from the local memory to the ESC memory
+            to the hardware
+*////////////////////////////////////////////////////////////////////////////////////////
+void APPL_InputMapping(UINT16* pData)
+{
+    UINT16 j = 0;
+    UINT16 *pTmpData = (UINT16 *)pData;//按照16位指针方式进行访问  模板16位
+    UINT8 inputState = 0;
+
+    /* we go through all entries of the TxPDO Assign object to get the assigned TxPDOs */
+    for (j = 0; j < sTxPDOassign.u16SubIndex0; j++)
+    {
+        switch (sTxPDOassign.aEntries[j])
+        {
+        /* TxPDO 1 */
+        case 0x1A00:  //注意这里于自己的XML配置对应起来  一般IO应用建议直接使用SSC工程生成  HLABS
+            *pTmpData++ = SWAPWORD(((UINT16 *) &Obj0x6000)[1]);
+            break;
+        }
+    }
+
+    inputState = (Obj0x6000.Switch1 ? 0x01 : 0x00) | (Obj0x6000.Switch2 ? 0x02 : 0x00);
+    if (inputState != sLastPdoIn)
+    {
+        sLastPdoIn = inputState;
+        printf("PDO IN  switch1=%u switch2=%u raw=0x%02X\r\n",
+               Obj0x6000.Switch1 ? 1 : 0,
+               Obj0x6000.Switch2 ? 1 : 0,
+               inputState);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\param      pData  pointer to output process data
+
+\brief    This function will copies the outputs from the ESC memory to the local memory
+            to the hardware
+*////////////////////////////////////////////////////////////////////////////////////////
+void APPL_OutputMapping(UINT16* pData)
+{
+    UINT16 j = 0;
+    UINT16 *pTmpData = (UINT16 *)pData;//按照16位指针方式进行访问  模板16位
+    UINT8 outputState = 0;
+
+    /* we go through all entries of the RxPDO Assign object to get the assigned RxPDOs */
+    for (j = 0; j < sRxPDOassign.u16SubIndex0; j++)
+    {
+        switch (sRxPDOassign.aEntries[j])
+        {
+        /* RxPDO 2 */
+        case 0x1601:  //注意这里于自己的XML配置对应起来  一般IO应用建议直接使用SSC工程生成  HLABS
+            ((UINT16 *) &Obj0x7010)[1] = SWAPWORD(*pTmpData++);
+            break;
+        }
+    }
+
+    outputState = (Obj0x7010.Led1 ? 0x01 : 0x00) | (Obj0x7010.Led2 ? 0x02 : 0x00);
+    if (outputState != sLastPdoOut)
+    {
+        sLastPdoOut = outputState;
+        printf("PDO OUT led1=%u led2=%u raw=0x%02X\r\n",
+               Obj0x7010.Led1 ? 1 : 0,
+               Obj0x7010.Led2 ? 1 : 0,
+               outputState);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\brief    This function will called from the synchronisation ISR 
+            or from the mainloop if no synchronisation is supported
+*////////////////////////////////////////////////////////////////////////////////////////
+void APPL_Application(void)
+{
+if(Obj0x7010.Led1){
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_SET);
+	}
+	else {
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_RESET);
+	}
+	if(Obj0x7010.Led2){
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_SET);
+	}
+	else {
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_RESET);
+	}	
+	
+	Obj0x6000.Switch1 = HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_8);
+	Obj0x6000.Switch2 = HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_9);
+}
+
+#if EXPLICIT_DEVICE_ID
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+ \return    The Explicit Device ID of the EtherCAT slave
+
+ \brief     Calculate the Explicit Device ID
+*////////////////////////////////////////////////////////////////////////////////////////
+UINT16 APPL_GetDeviceID()
+{
+#if _WIN32
+   #pragma message ("Warning: Implement explicit Device ID latching")
+#else
+    #warning "Implement explicit Device ID latching"
+#endif
+    /* Explicit Device 5 is expected by Explicit Device ID conformance tests*/
+    return 0x5;
+}
+#endif
+
+
+
+#if USE_DEFAULT_MAIN
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+
+ \brief    This is the main function
+
+*////////////////////////////////////////////////////////////////////////////////////////
+#if _PIC24
+int main(void)
+#else
+void main(void)
+#endif
+{
+    /* initialize the Hardware and the EtherCAT Slave Controller */
+#if FC1100_HW
+    if(HW_Init())
+    {
+        HW_Release();
+        return;
+    }
+#else
+    HW_Init();
+#endif
+    MainInit();
+
+    bRunApplication = TRUE;
+    do
+    {
+        MainLoop();
+        
+    } while (bRunApplication == TRUE);
+
+    HW_Release();
+#if _PIC24
+    return 0;
+#endif
+}
+#endif //#if USE_DEFAULT_MAIN
+/** @} */
+
+

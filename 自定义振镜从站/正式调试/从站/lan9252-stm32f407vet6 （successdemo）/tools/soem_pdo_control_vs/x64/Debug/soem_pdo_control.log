@@ -1,0 +1,15 @@
+﻿  soem_pdo_control.cpp
+  ec_base.c
+  ec_coe.c
+  ec_config.c
+  ec_dc.c
+  ec_eoe.c
+  ec_foe.c
+  ec_main.c
+  ec_print.c
+  ec_soe.c
+  osal.c
+  oshw.c
+  nicdrv.c
+  正在生成代码...
+  soem_pdo_control.vcxproj -> E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\soem_pdo_control.exe

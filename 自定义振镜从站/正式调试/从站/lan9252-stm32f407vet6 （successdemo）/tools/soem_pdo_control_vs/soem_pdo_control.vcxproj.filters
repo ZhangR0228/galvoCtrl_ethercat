@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8A5357D6-1243-47C7-B431-8C059CE5CB21}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx</Extensions>
+    </Filter>
+    <Filter Include="SOEM Sources">
+      <UniqueIdentifier>{8338F293-EB9E-4795-8844-EBA6C8F259CA}</UniqueIdentifier>
+      <Extensions>c</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{05758DAB-D4AB-4C70-B1D5-26EAA41CA890}</UniqueIdentifier>
+      <Extensions>h;hpp</Extensions>
+    </Filter>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="..\soem_pdo_control.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_base.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_coe.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_config.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_dc.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_eoe.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_foe.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_main.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_print.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_soe.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\osal\win32\osal.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\oshw\win32\oshw.c"><Filter>SOEM Sources</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\oshw\win32\nicdrv.c"><Filter>SOEM Sources</Filter></ClCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="$(SoemRoot)\include\soem\soem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

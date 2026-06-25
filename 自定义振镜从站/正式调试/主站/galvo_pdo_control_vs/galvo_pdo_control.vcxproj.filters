@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{45FAD3E4-4C76-4B48-9BDE-6349D9D82B08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SOEM">
+      <UniqueIdentifier>{C94D0AF8-0E59-49C1-8708-1821F873966B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{9C104155-2093-4E8A-A83D-FE1CF70A31E5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_base.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_coe.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_config.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_dc.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_eoe.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_foe.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_main.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_print.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\src\ec_soe.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\osal\win32\osal.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\oshw\win32\oshw.c"><Filter>SOEM</Filter></ClCompile>
+    <ClCompile Include="$(SoemRoot)\oshw\win32\nicdrv.c"><Filter>SOEM</Filter></ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="generated\include\soem\ec_options.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SoemRoot)\include\soem\soem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

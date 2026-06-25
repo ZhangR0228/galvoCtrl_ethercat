@@ -1,0 +1,20 @@
+#Out (inherited from Klipper)
+*.so
+*.pyc
+.config
+.config.old
+klippy/.version
+out/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.bak
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db

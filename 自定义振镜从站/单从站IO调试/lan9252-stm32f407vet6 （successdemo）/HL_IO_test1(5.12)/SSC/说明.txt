@@ -1,0 +1,11 @@
+
+1 为了防止在TWINCAT中XML冲突 可以修改 设备ID  Name 甚至设备名称信息  使用SSC-Device - HLECAT.xml
+
+2 注意TWINCAT的厂商、组、设备三层关系。默认TWINCAT以厂商ID和名字进行优先加载区分。如果加载不到您放置的XML信息可能因为冲突被隐藏
+
+3 eeprom  信息 需要修改  800E00CC8813f000000000800000
+
+4 刚入门先不要关注DC
+
+<Id>#xE0000002</Id>
+		<Name>HL_Beckhoff Automation GmbH &amp; Co. KG - Development Products</Name>

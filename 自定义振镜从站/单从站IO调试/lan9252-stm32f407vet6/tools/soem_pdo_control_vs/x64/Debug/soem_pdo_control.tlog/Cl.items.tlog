@@ -1,0 +1,13 @@
+E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control.cpp;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\soem_pdo_control.obj
+D:\ethercat_master_windows\SOEM\src\ec_base.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_base.obj
+D:\ethercat_master_windows\SOEM\src\ec_coe.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_coe.obj
+D:\ethercat_master_windows\SOEM\src\ec_config.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_config.obj
+D:\ethercat_master_windows\SOEM\src\ec_dc.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_dc.obj
+D:\ethercat_master_windows\SOEM\src\ec_eoe.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_eoe.obj
+D:\ethercat_master_windows\SOEM\src\ec_foe.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_foe.obj
+D:\ethercat_master_windows\SOEM\src\ec_main.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_main.obj
+D:\ethercat_master_windows\SOEM\src\ec_print.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_print.obj
+D:\ethercat_master_windows\SOEM\src\ec_soe.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\ec_soe.obj
+D:\ethercat_master_windows\SOEM\osal\win32\osal.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\osal.obj
+D:\ethercat_master_windows\SOEM\oshw\win32\oshw.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\oshw.obj
+D:\ethercat_master_windows\SOEM\oshw\win32\nicdrv.c;E:\IFOV\自定义振镜从站\单从站IO调试\lan9252-stm32f407vet6\tools\soem_pdo_control_vs\x64\Debug\nicdrv.obj

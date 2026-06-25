@@ -1,0 +1,1 @@
+E:\IFOV\自定义振镜从站\正式调试\主站\galvo_pdo_control_vs\x64\Debug\galvo_pdo_control.exe

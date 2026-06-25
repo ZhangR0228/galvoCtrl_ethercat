@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>位置-速度联合MPC轨迹分解 Demo</title>
+<style>
+body { font-family: Arial, 'Microsoft YaHei', sans-serif; margin: 24px; color: #202124; }
+h1 { font-size: 24px; }
+h2 { font-size: 18px; margin-top: 28px; }
+code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.card { border: 1px solid #d0d7de; border-radius: 8px; padding: 12px; background: #f8fafc; }
+.ok { color: #137333; font-weight: 700; }
+.bad { color: #b42318; font-weight: 700; }
+img { width: 100%; max-width: 1040px; border: 1px solid #d0d7de; border-radius: 6px; background: white; }
+</style>
+</head>
+<body>
+<h1>位置-速度联合MPC轨迹分解 Demo</h1>
+<p>该 demo 将 CAM 固定周期插补后的目标序列表示为 <code>target_x/y[k]</code> 和 <code>target_vx/vy[k]</code>，MPC 同时优化位置残差和速度残差。最终每个周期同时满足位置分解与速度分解。</p>
+<h2>分解关系</h2>
+<div class="grid">
+<div class="card"><code>target_x[k] = axis_x[k] + galvo_x[k]</code></div>
+<div class="card"><code>target_y[k] = galvo_y[k]</code></div>
+<div class="card"><code>target_vx[k] = axis_vx[k] + galvo_vx[k]</code></div>
+<div class="card"><code>target_vy[k] = galvo_vy[k]</code></div>
+</div>
+<h2>固定参数</h2>
+<div class="grid">
+<div class="card">周期 Ts：<code>1000 us</code></div>
+<div class="card">序列点数 K：<code>1101</code></div>
+<div class="card">MPC 预测窗口：<code>60</code> 点，即 <code>60.0 ms</code></div>
+<div class="card">基础 X 进给：<code>65.0 mm/s</code></div>
+<div class="card">目标最大合速度：<code>709.8 mm/s</code></div>
+<div class="card">轴限速/限加速度：<code>110.0 mm/s</code> / <code>1800.0 mm/s²</code></div>
+<div class="card">振镜正方形视场：<code>±11.0 mm</code></div>
+<div class="card">振镜速度上限：<code>4500.0 mm/s</code></div>
+</div>
+<h2>运行统计</h2>
+<div class="grid">
+<div class="card">最大位置重构误差：<code>0.000e+00</code></div>
+<div class="card">最大速度重构误差：<code>1.137e-13</code></div>
+<div class="card">最大 |galvo_x|：<code>7.132 mm</code></div>
+<div class="card">最大 |galvo_y|：<code>7.982 mm</code></div>
+<div class="card">最大 |galvo_vx|：<code>584.4 mm/s</code></div>
+<div class="card">最大 |galvo_vy|：<code>623.1 mm/s</code></div>
+<div class="card">最大 |galvo_v|：<code>722.8 mm/s</code></div>
+<div class="card">最大 |axis_v|：<code>95.878 mm/s</code></div>
+<div class="card">最大 |axis_a|：<code>1025.050 mm/s²</code></div>
+<div class="card">振镜超视场周期：<span class="ok">0</span></div>
+<div class="card">振镜超速度周期：<span class="ok">0</span></div>
+<div class="card">轴超约束周期：<span class="ok">0</span></div>
+<div class="card">允许出光周期：<code>937</code></div>
+</div>
+<h2>1. 位置分解</h2><img src="pv_fig_position_split.png">
+<h2>2. 速度分解</h2><img src="pv_fig_velocity_split.png">
+<h2>3. 振镜 X/Y 正方形视场</h2><img src="pv_fig_galvo_square_field.png">
+<h2>4. 振镜速度序列</h2><img src="pv_fig_galvo_velocity.png">
+<h2>5. 位置与速度重构误差</h2><img src="pv_fig_reconstruction_error.png">
+<h2>6. 长行程轴速度/加速度</h2><img src="pv_fig_axis_limits.png">
+</body>
+</html>

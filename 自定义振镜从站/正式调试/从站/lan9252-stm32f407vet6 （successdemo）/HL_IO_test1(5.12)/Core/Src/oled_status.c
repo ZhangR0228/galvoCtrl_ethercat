@@ -1,0 +1,206 @@
+#include "oled_status.h"
+#include <stdio.h>
+#include <string.h>
+
+#define OLED_WIDTH 128u
+#define OLED_PAGES 8u
+#define OLED_REFRESH_MS 250u
+
+typedef struct
+{
+    uint16_t status;
+    uint16_t last_sequence;
+    uint16_t frame_counter;
+    uint16_t sequence;
+    uint16_t flags;
+    int16_t x_code;
+    int16_t y_code;
+} OledStatusData;
+
+static uint8_t sBuffer[OLED_WIDTH * OLED_PAGES];
+static volatile OledStatusData sStatus;
+static uint8_t sReady;
+static uint32_t sLastRefresh;
+
+static const uint8_t Font5x7[][5] = {
+    {0x00,0x00,0x00,0x00,0x00},{0x00,0x00,0x5F,0x00,0x00},{0x00,0x07,0x00,0x07,0x00},{0x14,0x7F,0x14,0x7F,0x14},
+    {0x24,0x2A,0x7F,0x2A,0x12},{0x23,0x13,0x08,0x64,0x62},{0x36,0x49,0x55,0x22,0x50},{0x00,0x05,0x03,0x00,0x00},
+    {0x00,0x1C,0x22,0x41,0x00},{0x00,0x41,0x22,0x1C,0x00},{0x14,0x08,0x3E,0x08,0x14},{0x08,0x08,0x3E,0x08,0x08},
+    {0x00,0x50,0x30,0x00,0x00},{0x08,0x08,0x08,0x08,0x08},{0x00,0x60,0x60,0x00,0x00},{0x20,0x10,0x08,0x04,0x02},
+    {0x3E,0x51,0x49,0x45,0x3E},{0x00,0x42,0x7F,0x40,0x00},{0x42,0x61,0x51,0x49,0x46},{0x21,0x41,0x45,0x4B,0x31},
+    {0x18,0x14,0x12,0x7F,0x10},{0x27,0x45,0x45,0x45,0x39},{0x3C,0x4A,0x49,0x49,0x30},{0x01,0x71,0x09,0x05,0x03},
+    {0x36,0x49,0x49,0x49,0x36},{0x06,0x49,0x49,0x29,0x1E},{0x00,0x36,0x36,0x00,0x00},{0x00,0x56,0x36,0x00,0x00},
+    {0x08,0x14,0x22,0x41,0x00},{0x14,0x14,0x14,0x14,0x14},{0x00,0x41,0x22,0x14,0x08},{0x02,0x01,0x51,0x09,0x06},
+    {0x32,0x49,0x79,0x41,0x3E},{0x7E,0x11,0x11,0x11,0x7E},{0x7F,0x49,0x49,0x49,0x36},{0x3E,0x41,0x41,0x41,0x22},
+    {0x7F,0x41,0x41,0x22,0x1C},{0x7F,0x49,0x49,0x49,0x41},{0x7F,0x09,0x09,0x09,0x01},{0x3E,0x41,0x49,0x49,0x7A},
+    {0x7F,0x08,0x08,0x08,0x7F},{0x00,0x41,0x7F,0x41,0x00},{0x20,0x40,0x41,0x3F,0x01},{0x7F,0x08,0x14,0x22,0x41},
+    {0x7F,0x40,0x40,0x40,0x40},{0x7F,0x02,0x0C,0x02,0x7F},{0x7F,0x04,0x08,0x10,0x7F},{0x3E,0x41,0x41,0x41,0x3E},
+    {0x7F,0x09,0x09,0x09,0x06},{0x3E,0x41,0x51,0x21,0x5E},{0x7F,0x09,0x19,0x29,0x46},{0x46,0x49,0x49,0x49,0x31},
+    {0x01,0x01,0x7F,0x01,0x01},{0x3F,0x40,0x40,0x40,0x3F},{0x1F,0x20,0x40,0x20,0x1F},{0x3F,0x40,0x38,0x40,0x3F},
+    {0x63,0x14,0x08,0x14,0x63},{0x07,0x08,0x70,0x08,0x07},{0x61,0x51,0x49,0x45,0x43}
+};
+
+static void oled_delay(void)
+{
+    __NOP();
+    __NOP();
+    __NOP();
+}
+
+static void oled_select(uint8_t select)
+{
+    HAL_GPIO_WritePin(OLED_CS_GPIO_Port, OLED_CS_Pin, select ? GPIO_PIN_RESET : GPIO_PIN_SET);
+}
+
+static void oled_write_bit(uint8_t bit)
+{
+    HAL_GPIO_WritePin(OLED_SCK_GPIO_Port, OLED_SCK_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(OLED_MOSI_GPIO_Port, OLED_MOSI_Pin, bit ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    oled_delay();
+    HAL_GPIO_WritePin(OLED_SCK_GPIO_Port, OLED_SCK_Pin, GPIO_PIN_SET);
+    oled_delay();
+}
+
+static void oled_write9(uint8_t is_data, uint8_t value)
+{
+    int8_t i;
+
+    oled_write_bit(is_data ? 1u : 0u);
+    for (i = 7; i >= 0; --i) {
+        oled_write_bit((uint8_t)((value >> i) & 0x01u));
+    }
+    HAL_GPIO_WritePin(OLED_SCK_GPIO_Port, OLED_SCK_Pin, GPIO_PIN_RESET);
+}
+
+static void oled_cmd(uint8_t cmd)
+{
+    oled_select(1);
+    oled_write9(0u, cmd);
+    oled_select(0);
+}
+
+static void oled_data(const uint8_t *data, uint16_t len)
+{
+    uint16_t i;
+
+    oled_select(1);
+    for (i = 0; i < len; ++i) {
+        oled_write9(1u, data[i]);
+    }
+    oled_select(0);
+}
+
+static void oled_draw_char(uint8_t col, uint8_t page, char ch)
+{
+    uint16_t pos;
+    uint8_t i;
+    const uint8_t *glyph;
+
+    if (col >= OLED_WIDTH || page >= OLED_PAGES) {
+        return;
+    }
+    if (ch < ' ' || ch > 'Z') {
+        ch = '?';
+    }
+
+    glyph = Font5x7[ch - ' '];
+    pos = (uint16_t)page * OLED_WIDTH + col;
+    for (i = 0; i < 5 && (col + i) < OLED_WIDTH; ++i) {
+        sBuffer[pos + i] = glyph[i];
+    }
+    if ((col + 5u) < OLED_WIDTH) {
+        sBuffer[pos + 5u] = 0x00;
+    }
+}
+
+static void oled_draw_text(uint8_t col, uint8_t page, const char *text)
+{
+    while (*text != '\0' && col < OLED_WIDTH) {
+        oled_draw_char(col, page, *text++);
+        col = (uint8_t)(col + 6u);
+    }
+}
+
+static void oled_flush(void)
+{
+    uint8_t page;
+    for (page = 0; page < OLED_PAGES; ++page) {
+        oled_cmd((uint8_t)(0xB0u + page));
+        oled_cmd(0x00);
+        oled_cmd(0x10);
+        oled_data(&sBuffer[page * OLED_WIDTH], OLED_WIDTH);
+    }
+}
+
+static void oled_render(void)
+{
+    OledStatusData copy;
+    char line[24];
+
+    __disable_irq();
+    copy = sStatus;
+    __enable_irq();
+
+    memset(sBuffer, 0, sizeof(sBuffer));
+    oled_draw_text(0, 0, "GALVO CTRL");
+    snprintf(line, sizeof(line), "STS:%04X FLG:%04X", copy.status, copy.flags);
+    oled_draw_text(0, 1, line);
+    snprintf(line, sizeof(line), "SEQ:%05u", copy.sequence);
+    oled_draw_text(0, 2, line);
+    snprintf(line, sizeof(line), "ACK:%05u", copy.last_sequence);
+    oled_draw_text(0, 3, line);
+    snprintf(line, sizeof(line), "FRM:%05u", copy.frame_counter);
+    oled_draw_text(0, 4, line);
+    snprintf(line, sizeof(line), "X:%6d", copy.x_code);
+    oled_draw_text(0, 5, line);
+    snprintf(line, sizeof(line), "Y:%6d", copy.y_code);
+    oled_draw_text(0, 6, line);
+    oled_draw_text(0, 7, (copy.status & 0x0002u) ? "STALE" : "RUN");
+    oled_flush();
+}
+
+void OledStatus_Init(void)
+{
+    HAL_Delay(20);
+
+    oled_cmd(0xAE); oled_cmd(0xD5); oled_cmd(0x80); oled_cmd(0xA8); oled_cmd(0x3F);
+    oled_cmd(0xD3); oled_cmd(0x00); oled_cmd(0x40); oled_cmd(0x8D); oled_cmd(0x14);
+    oled_cmd(0x20); oled_cmd(0x02); oled_cmd(0xA1); oled_cmd(0xC8); oled_cmd(0xDA);
+    oled_cmd(0x12); oled_cmd(0x81); oled_cmd(0x7F); oled_cmd(0xD9); oled_cmd(0xF1);
+    oled_cmd(0xDB); oled_cmd(0x40); oled_cmd(0xA4); oled_cmd(0xA6); oled_cmd(0xAF);
+
+    sReady = 1;
+    sLastRefresh = HAL_GetTick() - OLED_REFRESH_MS;
+    OledStatus_Task();
+}
+
+void OledStatus_Task(void)
+{
+    uint32_t now;
+
+    if (!sReady) {
+        return;
+    }
+
+    now = HAL_GetTick();
+    if ((now - sLastRefresh) < OLED_REFRESH_MS) {
+        return;
+    }
+    sLastRefresh = now;
+    oled_render();
+}
+
+void OledStatus_SetEthercat(uint16_t status, uint16_t last_sequence, uint16_t frame_counter)
+{
+    sStatus.status = status;
+    sStatus.last_sequence = last_sequence;
+    sStatus.frame_counter = frame_counter;
+}
+
+void OledStatus_SetCommand(int16_t x_code, int16_t y_code, uint16_t sequence, uint16_t flags)
+{
+    sStatus.x_code = x_code;
+    sStatus.y_code = y_code;
+    sStatus.sequence = sequence;
+    sStatus.flags = flags;
+}

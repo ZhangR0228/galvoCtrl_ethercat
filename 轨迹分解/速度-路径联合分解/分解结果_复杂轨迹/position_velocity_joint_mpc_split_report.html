@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Position-Velocity Joint MPC Split Demo</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 24px; color: #202124; }
+h1 { font-size: 24px; }
+h2 { font-size: 18px; margin-top: 28px; }
+code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.card { border: 1px solid #d0d7de; border-radius: 8px; padding: 12px; background: #f8fafc; }
+.ok { color: #137333; font-weight: 700; }
+.bad { color: #b42318; font-weight: 700; }
+img { width: 100%; max-width: 1040px; border: 1px solid #d0d7de; border-radius: 6px; background: white; }
+</style>
+</head>
+<body>
+<h1>Position-Velocity Joint MPC Split Demo</h1>
+<p>This demo reads an NC/G-code file, interpolates fixed-cycle target position and velocity,
+then splits the X motion between the long axis and the galvo. The final laser output is
+enabled only when the NC laser command is on and all motion constraints are satisfied.</p>
+<h2>Input</h2>
+<div class="grid">
+<div class="card">NC file: <code>complex_position_velocity_joint_mpc_input.nc</code></div>
+<div class="card">Cycle time Ts: <code>1000 us</code></div>
+<div class="card">Samples K: <code>6110</code></div>
+<div class="card">MPC horizon: <code>60</code> samples, <code>60.0 ms</code></div>
+</div>
+<h2>Split Equations</h2>
+<div class="grid">
+<div class="card"><code>target_x[k] = axis_x[k] + galvo_x[k]</code></div>
+<div class="card"><code>target_y[k] = galvo_y[k]</code></div>
+<div class="card"><code>target_vx[k] = axis_vx[k] + galvo_vx[k]</code></div>
+<div class="card"><code>target_vy[k] = galvo_vy[k]</code></div>
+</div>
+<h2>Limits</h2>
+<div class="grid">
+<div class="card">Max target speed: <code>110.0 mm/s</code></div>
+<div class="card">Axis velocity / acceleration limit: <code>110.0 mm/s</code> / <code>1800.0 mm/s^2</code></div>
+<div class="card">Galvo square field: <code>+/-11.0 mm</code></div>
+<div class="card">Galvo velocity limit: <code>4500.0 mm/s</code></div>
+</div>
+<h2>Run Summary</h2>
+<div class="grid">
+<div class="card">Max position reconstruction error: <code>8.882e-16</code></div>
+<div class="card">Max velocity reconstruction error: <code>1.421e-14</code></div>
+<div class="card">Max |galvo_x|: <code>8.523 mm</code></div>
+<div class="card">Max |galvo_y|: <code>10.700 mm</code></div>
+<div class="card">Max |galvo_vx|: <code>148.2 mm/s</code></div>
+<div class="card">Max |galvo_vy|: <code>93.3 mm/s</code></div>
+<div class="card">Max |galvo_v|: <code>163.0 mm/s</code></div>
+<div class="card">Max |axis_v|: <code>110.000 mm/s</code></div>
+<div class="card">Max |axis_a|: <code>1175.205 mm/s^2</code></div>
+<div class="card">Galvo field fail cycles: <span class="ok">0</span></div>
+<div class="card">Galvo speed fail cycles: <span class="ok">0</span></div>
+<div class="card">Axis fail cycles: <span class="bad">659</span></div>
+<div class="card">Laser command cycles: <code>5871</code></div>
+<div class="card">Final laser-on cycles: <code>5309</code></div>
+</div>
+<h2>1. Position Split</h2><img src="pv_fig_position_split.png" alt="Position split">
+<h2>2. Velocity Split</h2><img src="pv_fig_velocity_split.png" alt="Velocity split">
+<h2>3. Galvo XY Field</h2><img src="pv_fig_galvo_square_field.png" alt="Galvo XY field">
+<h2>4. Field Overlay</h2><img src="pv_fig_field_overlay.png" alt="Galvo field and axis field overlay">
+<h2>5. Galvo Velocity</h2><img src="pv_fig_galvo_velocity.png" alt="Galvo velocity">
+<h2>6. Reconstruction Error</h2><img src="pv_fig_reconstruction_error.png" alt="Reconstruction error">
+<h2>7. Axis Limits</h2><img src="pv_fig_axis_limits.png" alt="Axis limits">
+<h2>8. Laser Output</h2><img src="pv_fig_laser_output.png" alt="Laser output">
+</body>
+</html>
